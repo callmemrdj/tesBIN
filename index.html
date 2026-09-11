@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <title>Latihan IRODORI Mr.DJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --primary: #10b981;
+        --primary-dark: #059669;
+        --primary-light: #d1fae5;
+        --bg: #f0fdf4;
+        --text: #064e3b;
+        --white: #ffffff;
+        --shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15), 0 2px 4px -1px rgba(16, 185, 129, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        overscroll-behavior-y: none;
+      }
+
+      header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        padding: 0.8rem 1rem;
+        text-align: center;
+        box-shadow: var(--shadow);
+        flex-shrink: 0;
+        z-index: 30;
+      }
+      header h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      .tab-menu {
+        display: flex;
+        background: var(--white);
+        border-bottom: 2px solid var(--primary-light);
+        overflow-x: auto;
+        scrollbar-width: none;
+        flex-shrink: 0;
+        z-index: 20;
+      }
+      .tab-menu::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.9rem 0.5rem;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        text-align: center;
+      }
+      .tab-btn.active {
+        color: var(--primary-dark);
+        border-bottom-color: var(--primary);
+        background: var(--bg);
+      }
+
+      #chapter-panel {
+        max-height: 0;
+        overflow: hidden;
+        background: var(--white);
+        transition:
+          max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          opacity 0.3s ease;
+        opacity: 0;
+        flex-shrink: 0;
+        z-index: 15;
+        border-bottom: 1px solid var(--primary-light);
+      }
+      #chapter-panel.open {
+        max-height: 45vh;
+        overflow-y: auto;
+        opacity: 1;
+      }
+
+      .book-chapters {
+        display: none;
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 0.6rem;
+        padding: 1rem;
+      }
+      .book-chapters.active-grid {
+        display: grid;
+      }
+
+      .chapter-btn {
+        padding: 0.7rem 0.4rem;
+        border: 1px solid var(--primary);
+        background: var(--white);
+        color: var(--primary-dark);
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .chapter-btn:active {
+        transform: scale(0.95);
+      }
+      .chapter-btn.active {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary-dark);
+      }
+
+      /* PDF Controls */
+      #pdf-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 0.6rem;
+        background: var(--white);
+        border-bottom: 1px solid var(--primary-light);
+        flex-shrink: 0;
+        z-index: 10;
+        flex-wrap: wrap;
+      }
+      .ctrl-btn {
+        padding: 0.5rem 0.9rem;
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border: 1px solid var(--primary);
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.2s;
+        min-width: 40px;
+      }
+      .ctrl-btn:active {
+        background: var(--primary);
+        color: white;
+        transform: scale(0.95);
+      }
+      #zoom-level {
+        font-weight: 600;
+        font-size: 0.9rem;
+        min-width: 55px;
+        text-align: center;
+        color: var(--primary-dark);
+        background: var(--primary-light);
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid var(--primary);
+      }
+      .divider {
+        width: 1px;
+        height: 24px;
+        background: #d1d5db;
+        margin: 0 4px;
+      }
+
+      /* PDF Viewer Area with Zoom Support */
+      #pdf-wrapper {
+        flex-grow: 1;
+        overflow: auto;
+        background: #e5e7eb;
+        position: relative;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #pdf-zoom-container {
+        transform-origin: top left;
+        transition: transform 0.2s ease;
+        width: 100%;
+        height: 100%;
+        min-width: 100%;
+        min-height: 100%;
+      }
+
+      #pdf-viewer {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        color: var(--primary-dark);
+        font-weight: 500;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--primary-light);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Hint untuk pinch zoom di mobile */
+      .zoom-hint {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        z-index: 6;
+      }
+      .zoom-hint.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>📚 Latihan IRODORI Mr.DJ</h1>
+    </header>
+
+    <nav class="tab-menu" id="tab-menu"></nav>
+
+    <div id="chapter-panel"></div>
+
+    <!-- Kontrol Zoom -->
+    <div id="pdf-controls">
+      <button class="ctrl-btn" id="zoom-out" title="Perkecil">➖</button>
+      <span id="zoom-level">100%</span>
+      <button class="ctrl-btn" id="zoom-in" title="Perbesar">➕</button>
+      <div class="divider"></div>
+      <button class="ctrl-btn" id="zoom-reset" title="Reset Zoom">↺</button>
+    </div>
+
+    <!-- Area Viewer PDF dengan Zoom -->
+    <div id="pdf-wrapper">
+      <div id="pdf-zoom-container">
+        <iframe id="pdf-viewer" src="" allowfullscreen></iframe>
+      </div>
+      <div id="loading">
+        <div class="spinner"></div>
+        <span>Memuat PDF...</span>
+      </div>
+      <div class="zoom-hint" id="zoom-hint">Cubit layar untuk zoom</div>
+    </div>
+
+    <script>
+      const booksData = [
+        {
+          id: 'a1',
+          title: 'A1 (Nyuumon)',
+          chapters: [
+            { title: 'Pengantar Kelas', id: '1-IKqQGIQpburNpoBqcaixelO7Sc_tBuc' },
+            { title: 'Bab 1', id: '1P6c7RlHiu1OS1Ob3ANHxgnrc2e31NE7u' },
+            { title: 'Bab 2', id: '1Ne4oe-pVZY6-Lfft8mcOwn8VAfNdWCB9' },
+            { title: 'Bab 3', id: '1Xno47VmGGhhTtW0mr6x2nt_mxaILnXQt' },
+            { title: 'Bab 4', id: '128HHhrvi1ZJv0UNE5HhiI6geN29Ehg2V' },
+            { title: 'Bab 5', id: '1K9mKXSwebYSs69YY8T46khdNNsOlKMgY' },
+            { title: 'Bab 6', id: '1atQ_rcRDD-FvEtkY2ghzro1-dMIISF1I' },
+            { title: 'Bab 7', id: '1DVuAILxSXaSOtjZ07VQEYLadpCJWHoQz' },
+            { title: 'Bab 8', id: '1VK89okCIdXjYnfNi30d-sdhJxauDWSrS' },
+            { title: 'Bab 9', id: '1uvEIp5Kd5iKAANroGJX_14t_Dsfv1H6Z' },
+            { title: 'Bab 10', id: '1UX6R4UtJhKietJ6PaRFDdW4RLNjgWFfx' },
+            { title: 'Bab 11', id: '1gbI93GgcSIV9daf7QhoopIgsOfEvRgTt' },
+            { title: 'Bab 12', id: '1nEKQnMjCMMBrLtPbai2lqAXbWOZBsOWg' },
+            { title: 'Bab 13', id: '1ItsNGgv2ni2dzR5lklU_MLLj_fXT590K' },
+            { title: 'Bab 14', id: '1LjIW-PSZX6W5W26AjLc3p_6A4HFhpqLP' },
+            { title: 'Bab 15', id: '11RuxReEYxzkDRR6zRRSGPLQwsPk8t2dy' },
+            { title: 'Bab 16', id: '18UW3knFrXGP08kc3F_HInPhX8cJYaefO' },
+            { title: 'Bab 17', id: '1CEg-GHu6Zu2k-GSOeoNu5WOeYJV5_rO2' },
+            { title: 'Bab 18', id: '1IBbpLDENXq9uT7ER_0k6ZY39a-hvcGYD' },
+            /*{ title: 'Kunci Jawaban', id: '1oeb1Lhwd2J7Y3_d-jVMjDUAYZMGQ5XQt' },*/
+          ],
+        },
+        {
+          id: 'a2-1',
+          title: 'A2-1 (Shokyuu 1)',
+          chapters: [
+            { title: 'Bab 1', id: '1ONq-PX62gntVlS1F-U8RukbsbDefJpAR' },
+            { title: 'Bab 2', id: '1vcx61muZbSTM4tlBTvf7TjeLHgxQlyh8' },
+            { title: 'Bab 3', id: '1GfeU5gebki_ZdTKn6M4CIOCD8GTzdQR8' },
+            { title: 'Bab 4', id: '10oqYy3g98WqbPE7U_waK9nfYXFkKH4Ty' },
+            { title: 'Bab 5', id: '1Le27qUkUryLyrKySYLc7xkQ6D8jxzpWJ' },
+            { title: 'Bab 6', id: '1GXBMgxp5Z0LiTwKmE11tGtJCxjvc1B9O' },
+            { title: 'Bab 7', id: '1tzBlQsMDhZAPVSSJaDhJBTvXbq1iqOIr' },
+            { title: 'Bab 8', id: '10y-y6gHWafV-iWVA91gHu8PpQHOd6opi' },
+            { title: 'Bab 9', id: '1RKBBVR3xvEq9BnQSayAObWopgcptJee_' },
+            { title: 'Bab 10', id: '1gdEAZ4zvvkbMZ-t1fWj-H-FEaY8wyLrN' },
+            { title: 'Bab 11', id: '1GUYHqA7hkm1xmXzUx35aX7tjjTqKywSD' },
+            { title: 'Bab 12', id: '16h1Jf0pHESzpKSe8CQaRtqnO-oaF6xLk' },
+            { title: 'Bab 13', id: '1g8pZBSItm9eQDFCAosPKwSFKfwyiDdrr' },
+            { title: 'Bab 14', id: '1LbkUtUXOHJGuhjTSXxzF_o0fgJF7Kaq0' },
+            { title: 'Bab 15', id: '1wl3sKTWhpWhY2OaNR1eigxw2G_7fkE1w' },
+            { title: 'Bab 16', id: '1TDrjF6xmcGeFwPuFFFQPhcuDGPY86mX7' },
+            { title: 'Bab 17', id: '1j69tTRyesdO35fw3wewsd_lGXGgFCerZ' },
+            { title: 'Bab 18', id: '1dDWdOpu8eXnOST1IYtBbR4PZhRg33J9u' },
+            /*{ title: 'Kunci Jawaban', id: '1MYuSEWNh524kTe51z_KpClk08N9F0aMW' },*/
+          ],
+        },
+        {
+          id: 'a2-2',
+          title: 'A2-2 (Shokyuu 2)',
+          chapters: [
+            { title: 'Bab 1', id: '1d21V3jTClyjYX_Pb-KT0ZJJnRSRt5c2b' },
+            { title: 'Bab 2', id: '1XGwF4ijs34KDDwxPuxvd4lrVToXwBZd7' },
+            { title: 'Bab 3', id: '1oy7ZG7epvt5JNfxnvHhaxzrlcxX2Jxk0' },
+            { title: 'Bab 4', id: '1aRsUnEEyjnJpJco5fr29TYBHxjd6QS6c' },
+            { title: 'Bab 5', id: '1KjRPADo90Y303AE4JiMM1rOVmoeIA_Z9' },
+            { title: 'Bab 6', id: '1vlqOg1mxWmdkq-pmEN9vgq6kJY46rWZA' },
+            { title: 'Bab 7', id: '1qTYCygAEMdROO-pFs-fC4x4ZN2oH8UAn' },
+            { title: 'Bab 8', id: '1bmc2nCxfNwPVnefoIrIq1o2s837c2XKi' },
+            { title: 'Bab 9', id: '196SzFKTiQMRsv-q5LX6N-VLeGsjJicNO' },
+            { title: 'Bab 10', id: '19pB6AtRDYim0ujS5hJQi_hOtfZ9tvRZB' },
+            { title: 'Bab 11', id: '1OL-kr89T5gJvBDSrguxXMbsnV9IRHW2C' },
+            { title: 'Bab 12', id: '1DX_aX-dawF0KFBorTpBBsAuTOG-DUZRq' },
+            { title: 'Bab 13', id: '1BykFMr0qFx2yKIAQp9W_s9o6JDHlhOLY' },
+            { title: 'Bab 14', id: '1RIo28ntoXL2c20Ri97ZMUD9zlb2h3SUa' },
+            { title: 'Bab 15', id: '1vzQHWj5C63zT676TQVJbVUG2Q_hVLmMn' },
+            { title: 'Bab 16', id: '1ztrs-3RQxb4mPIzWT7Ykb2N2LqBBXOoA' },
+            { title: 'Bab 17', id: '1eZ1Z7_n8Z-g4PQdsgk1XhJmMS5eXHQj1' },
+            { title: 'Bab 18', id: '1_mAT9GOwYEcq8_z8mbE9SkwYJJbf37ZW' },
+            /*{ title: 'Kunci Jawaban', id: '1snZDmhwaa6yYm9GHK2ZgfOGGQcUUkY7c' },*/
+          ],
+        },
+      ];
+
+      const pdfViewer = document.getElementById('pdf-viewer');
+      const pdfZoomContainer = document.getElementById('pdf-zoom-container');
+      const pdfWrapper = document.getElementById('pdf-wrapper');
+      const loading = document.getElementById('loading');
+      const tabMenu = document.getElementById('tab-menu');
+      const chapterPanel = document.getElementById('chapter-panel');
+      const zoomLevelDisplay = document.getElementById('zoom-level');
+      const zoomHint = document.getElementById('zoom-hint');
+
+      let currentActiveBook = null;
+      let currentScale = 1.0;
+      const ZOOM_STEP = 0.25;
+      const MIN_ZOOM = 0.5;
+      const MAX_ZOOM = 3.0;
+
+      // ==========================================
+      // 1. PENCEGAHAN REFRESH
+      // ==========================================
+      window.onbeforeunload = function (e) {
+        e.preventDefault();
+        e.returnValue = 'Yakin ingin keluar?';
+      };
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) e.preventDefault();
+        if (e.key === 'F5') e.preventDefault();
+      });
+
+      // ==========================================
+      // 2. FUNGSI ZOOM
+      // ==========================================
+      function updateZoom() {
+        pdfZoomContainer.style.transform = `scale(${currentScale})`;
+
+        // Update ukuran container agar scroll bekerja
+        const wrapperRect = pdfWrapper.getBoundingClientRect();
+        pdfZoomContainer.style.width = `${wrapperRect.width / currentScale}px`;
+        pdfZoomContainer.style.height = `${wrapperRect.height / currentScale}px`;
+
+        zoomLevelDisplay.textContent = Math.round(currentScale * 100) + '%';
+      }
+
+      function zoomIn() {
+        if (currentScale < MAX_ZOOM) {
+          currentScale = Math.min(currentScale + ZOOM_STEP, MAX_ZOOM);
+          updateZoom();
+        }
+      }
+
+      function zoomOut() {
+        if (currentScale > MIN_ZOOM) {
+          currentScale = Math.max(currentScale - ZOOM_STEP, MIN_ZOOM);
+          updateZoom();
+        }
+      }
+
+      function resetZoom() {
+        currentScale = 1.0;
+        updateZoom();
+        pdfWrapper.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }
+
+      // ==========================================
+      // 3. PINCH-TO-ZOOM UNTUK MOBILE
+      // ==========================================
+      let initialDistance = 0;
+      let initialScale = 1;
+
+      function getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      pdfWrapper.addEventListener(
+        'touchstart',
+        function (e) {
+          if (e.touches.length === 2) {
+            e.preventDefault();
+            initialDistance = getDistance(e.touches[0], e.touches[1]);
+            initialScale = currentScale;
+          }
+        },
+        { passive: false },
+      );
+
+      pdfWrapper.addEventListener(
+        'touchmove',
+        function (e) {
+          if (e.touches.length === 2) {
+            e.preventDefault();
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            const scaleChange = currentDistance / initialDistance;
+            currentScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, initialScale * scaleChange));
+            updateZoom();
+          }
+        },
+        { passive: false },
+      );
+
+      pdfWrapper.addEventListener('touchend', function (e) {
+        if (e.touches.length < 2) {
+          initialDistance = 0;
+        }
+      });
+
+      // Tampilkan hint pinch zoom di mobile
+      if ('ontouchstart' in window) {
+        setTimeout(() => {
+          zoomHint.classList.add('show');
+          setTimeout(() => zoomHint.classList.remove('show'), 3000);
+        }, 2000);
+      }
+
+      // ==========================================
+      // 4. FUNGSI LOAD PDF
+      // ==========================================
+      function loadPDF(fileId, btnElement) {
+        loading.style.display = 'flex';
+        pdfViewer.style.opacity = '0.3';
+
+        // Reset zoom saat load PDF baru
+        currentScale = 1.0;
+        updateZoom();
+        pdfWrapper.scrollTo({ top: 0, left: 0 });
+
+        // Gunakan endpoint preview Google Drive
+        const url = `https://drive.google.com/file/d/${fileId}/preview?rm=minimal`;
+        pdfViewer.src = url;
+
+        localStorage.setItem('irodori_last_file', fileId);
+        document.querySelectorAll('.chapter-btn').forEach((btn) => btn.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+
+        let loadTimeout = setTimeout(() => {
+          loading.style.display = 'none';
+          pdfViewer.style.opacity = '1';
+        }, 5000);
+
+        pdfViewer.onload = function () {
+          clearTimeout(loadTimeout);
+          loading.style.display = 'none';
+          pdfViewer.style.opacity = '1';
+        };
+      }
+
+      // ==========================================
+      // 5. INTERAKSI MENU & BAB
+      // ==========================================
+      function handleTabClick(bookId) {
+        const isAlreadyOpen = chapterPanel.classList.contains('open') && currentActiveBook === bookId;
+        document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.book === bookId));
+        document.querySelectorAll('.book-chapters').forEach((grid) => grid.classList.toggle('active-grid', grid.id === `chapters-${bookId}`));
+        currentActiveBook = bookId;
+        chapterPanel.classList.toggle('open', !isAlreadyOpen);
+      }
+
+      function handleChapterClick(fileId, btnElement, bookId) {
+        loadPDF(fileId, btnElement);
+        chapterPanel.classList.remove('open');
+        document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.book === bookId));
+      }
+
+      // ==========================================
+      // 6. INISIALISASI UI
+      // ==========================================
+      function init() {
+        // Event Listeners untuk Kontrol Zoom
+        document.getElementById('zoom-in').addEventListener('click', zoomIn);
+        document.getElementById('zoom-out').addEventListener('click', zoomOut);
+        document.getElementById('zoom-reset').addEventListener('click', resetZoom);
+
+        // Generate Menu & Bab
+        booksData.forEach((book) => {
+          const tabBtn = document.createElement('button');
+          tabBtn.className = 'tab-btn';
+          tabBtn.dataset.book = book.id;
+          tabBtn.textContent = book.title;
+          tabBtn.onclick = () => handleTabClick(book.id);
+          tabMenu.appendChild(tabBtn);
+
+          const grid = document.createElement('div');
+          grid.id = `chapters-${book.id}`;
+          grid.className = 'book-chapters';
+
+          book.chapters.forEach((chapter) => {
+            const btn = document.createElement('button');
+            btn.className = 'chapter-btn';
+            btn.textContent = chapter.title;
+            btn.dataset.id = chapter.id;
+            btn.onclick = () => handleChapterClick(chapter.id, btn, book.id);
+            grid.appendChild(btn);
+          });
+          chapterPanel.appendChild(grid);
+        });
+
+        // Restore sesi terakhir
+        const lastFile = localStorage.getItem('irodori_last_file');
+        let defaultBookId = 'a1';
+
+        if (lastFile) {
+          for (const book of booksData) {
+            if (book.chapters.some((c) => c.id === lastFile)) {
+              defaultBookId = book.id;
+              break;
+            }
+          }
+        }
+
+        const firstBook = booksData.find((b) => b.id === defaultBookId);
+        if (firstBook) {
+          document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.book === defaultBookId));
+          document.querySelectorAll('.book-chapters').forEach((grid) => grid.classList.toggle('active-grid', grid.id === `chapters-${defaultBookId}`));
+          currentActiveBook = defaultBookId;
+
+          if (lastFile) {
+            const btn = document.querySelector(`.chapter-btn[data-id="${lastFile}"]`);
+            loadPDF(lastFile, btn);
+          } else {
+            const firstBtn = document.querySelector(`#chapters-${defaultBookId} .chapter-btn`);
+            if (firstBtn) loadPDF(firstBtn.dataset.id, firstBtn);
+          }
+        }
+
+        // Inisialisasi zoom awal
+        updateZoom();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
